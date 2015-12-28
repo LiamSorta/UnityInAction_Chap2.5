@@ -3,6 +3,7 @@ using System.Collections;
 
 public class RelativeMovement : MonoBehaviour {
 	[SerializeField] private Transform target;								// This script needs a reference to the object to move relative to
+	public float rotSpeed = 15.0f;
 
 	void Update () {
 		Vector3 movement = Vector3.zero;									// Start with vector (0,0,0) and add movement components progressively.
@@ -18,7 +19,9 @@ public class RelativeMovement : MonoBehaviour {
 			movement = target.TransformDirection (movement);				// Transform movement direction from Local to Global coorindates
 			target.rotation = tmp;
 
-			transform.rotation = Quaternion.LookRotation (movement);		// `LookRotation()` calculates a quaternion facing in that direction
+			Quaternion direction = Quaternion.LookRotation (movement);
+			transform.rotation = Quaternion.Lerp (transform.rotation, direction, rotSpeed * Time.deltaTime);
+			//transform.rotation = Quaternion.LookRotation (movement);		// `LookRotation()` calculates a quaternion facing in that direction
 		}
 	}
 }
