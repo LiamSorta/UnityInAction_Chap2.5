@@ -12,6 +12,7 @@ public class RelativeMovement : MonoBehaviour {
 	public float minFall = 1.5f;
 
 	private CharacterController _charController;
+	private ControllerColliderHit _contact;
 	private float _vertSpeed;
 
 	void Start() {
@@ -39,8 +40,17 @@ public class RelativeMovement : MonoBehaviour {
 			//transform.rotation = Quaternion.LookRotation (movement);		// `LookRotation()` calculates a quaternion facing in that direction
 		}
 
-		if (_charController.isGrounded) {									// CharacterController has an `isGrounded` property to check if the controller is on the ground
-			if (Input.GetButtonDown ("Jump")) {							// React to the Jump button while on the ground.
+		bool hitGround = false;
+		RaycastHit hit;
+
+		if (_vertSpeed < 0 && 
+			Physics.Raycast (transform.position, Vector3.down, out hit)) {	// Check if the player is falling
+			float check = (_charController.height + _charController.radius) / 1.9f;	// The distance to check against (extend slightly beyond the bottom of the capsule)
+			hitGround = hit.distance <= check;
+		}
+
+		if (hitGround) {													// Instead of using `isGrounded`, check the raycasting result.
+			if (Input.GetButtonDown ("Jump")) {								// React to the Jump button while on the ground.
 				_vertSpeed = jumpSpeed;
 			} else {
 				_vertSpeed = minFall;										
@@ -50,10 +60,22 @@ public class RelativeMovement : MonoBehaviour {
 			if (_vertSpeed < terminalVelocity) {
 				_vertSpeed = terminalVelocity;
 			}
+
+			if (_charController.isGrounded) {								// Raycasting didn't detect ground, but the capsule is touching the ground
+				if (Vector3.Dot (movement, _contact.normal) < 0) {			// Respond slighlty differently depending on whether the character is facing the contact point
+					movement = _contact.normal * moveSpeed;
+				} else {
+					movement += _contact.normal * moveSpeed;
+				}
+			}
 		}
 		movement.y = _vertSpeed;
 
 		movement *= Time.deltaTime;											// Remember to always multiply movement by deltaTime to make them frame rate-independent
 		_charController.Move (movement);
+	}
+
+	void OnControllerColliderHit(ControllerColliderHit hit){				// Store the collision data in the callback when a collision is detected.
+		_contact = hit;
 	}
 }
