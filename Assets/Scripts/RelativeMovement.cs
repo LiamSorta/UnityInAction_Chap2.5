@@ -13,11 +13,13 @@ public class RelativeMovement : MonoBehaviour {
 
 	private CharacterController _charController;
 	private ControllerColliderHit _contact;
+	private Animator _animator;
 	private float _vertSpeed;
 
 	void Start() {
 		_vertSpeed = minFall;												// Initialize the vertical speed to the minimum falling speed at the start of the existing function
 		_charController = GetComponent<CharacterController> ();				// Here's a pattern you've seen in previous chapters, used for getting access to other components.
+		_animator = GetComponent<Animator> ();
 	}
 
 	void Update () {
@@ -39,6 +41,7 @@ public class RelativeMovement : MonoBehaviour {
 			transform.rotation = Quaternion.Lerp (transform.rotation, direction, rotSpeed * Time.deltaTime);
 			//transform.rotation = Quaternion.LookRotation (movement);		// `LookRotation()` calculates a quaternion facing in that direction
 		}
+		_animator.SetFloat ("Speed", movement.sqrMagnitude);
 
 		bool hitGround = false;
 		RaycastHit hit;
@@ -53,12 +56,18 @@ public class RelativeMovement : MonoBehaviour {
 			if (Input.GetButtonDown ("Jump")) {								// React to the Jump button while on the ground.
 				_vertSpeed = jumpSpeed;
 			} else {
-				_vertSpeed = minFall;										
+				_vertSpeed = -0.1f;
+				_animator.SetBool ("Jumping", false);
 			}
 		} else {															// If not on the ground, then apply gravity until terminal velocity is reached.
 			_vertSpeed += gravity * 5 * Time.deltaTime;
+
 			if (_vertSpeed < terminalVelocity) {
 				_vertSpeed = terminalVelocity;
+			}
+
+			if (_contact != null) {
+				_animator.SetBool ("Jumping", true);
 			}
 
 			if (_charController.isGrounded) {								// Raycasting didn't detect ground, but the capsule is touching the ground
