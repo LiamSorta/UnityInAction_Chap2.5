@@ -6,10 +6,16 @@ public class RelativeMovement : MonoBehaviour {
 	[SerializeField] private Transform target;								// This script needs a reference to the object to move relative to
 	public float rotSpeed = 15.0f;
 	public float moveSpeed = 6.0f;
+	public float jumpSpeed = 15.0f;
+	public float gravity = -9.8f;
+	public float terminalVelocity = -10.0f;
+	public float minFall = 1.5f;
 
 	private CharacterController _charController;
+	private float _vertSpeed;
 
 	void Start() {
+		_vertSpeed = minFall;												// Initialize the vertical speed to the minimum falling speed at the start of the existing function
 		_charController = GetComponent<CharacterController> ();				// Here's a pattern you've seen in previous chapters, used for getting access to other components.
 	}
 
@@ -33,7 +39,21 @@ public class RelativeMovement : MonoBehaviour {
 			//transform.rotation = Quaternion.LookRotation (movement);		// `LookRotation()` calculates a quaternion facing in that direction
 		}
 
-		movement *= Time.deltaTime;											// Remeber to always multiply movement by deltaTime to make them frame rate-independent
+		if (_charController.isGrounded) {									// CharacterController has an `isGrounded` property to check if the controller is on the ground
+			if (Input.GetButtonDown ("Jump")) {							// React to the Jump button while on the ground.
+				_vertSpeed = jumpSpeed;
+			} else {
+				_vertSpeed = minFall;										
+			}
+		} else {															// If not on the ground, then apply gravity until terminal velocity is reached.
+			_vertSpeed += gravity * 5 * Time.deltaTime;
+			if (_vertSpeed < terminalVelocity) {
+				_vertSpeed = terminalVelocity;
+			}
+		}
+		movement.y = _vertSpeed;
+
+		movement *= Time.deltaTime;											// Remember to always multiply movement by deltaTime to make them frame rate-independent
 		_charController.Move (movement);
 	}
 }
