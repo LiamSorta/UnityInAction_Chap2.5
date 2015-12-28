@@ -10,6 +10,7 @@ public class RelativeMovement : MonoBehaviour {
 	public float gravity = -9.8f;
 	public float terminalVelocity = -10.0f;
 	public float minFall = 1.5f;
+	public float pushForce = 3.0f;											// Amount of force to apply
 
 	private CharacterController _charController;
 	private ControllerColliderHit _contact;
@@ -86,5 +87,10 @@ public class RelativeMovement : MonoBehaviour {
 
 	void OnControllerColliderHit(ControllerColliderHit hit){				// Store the collision data in the callback when a collision is detected.
 		_contact = hit;
+
+		Rigidbody body = hit.collider.attachedRigidbody;					// Check if the collided object has a Rigidbody to receive physics forces.
+		if (body != null && !body.isKinematic) {
+			body.velocity = hit.moveDirection * pushForce;					// Apply velocity to the physics body.
+		}
 	}
 }
