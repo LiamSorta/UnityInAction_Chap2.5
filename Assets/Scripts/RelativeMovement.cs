@@ -4,6 +4,7 @@ using System.Collections;
 [RequireComponent(typeof(CharacterController))]								
 public class RelativeMovement : MonoBehaviour {
 	[SerializeField] private Transform target;								// This script needs a reference to the object to move relative to
+    [SerializeField] GameObject energyUI;
 	public float rotSpeed = 15.0f;
 	public float moveSpeed = 6.0f;
 	public float jumpSpeed = 15.0f;
@@ -11,6 +12,8 @@ public class RelativeMovement : MonoBehaviour {
 	public float terminalVelocity = -10.0f;
 	public float minFall = 1.5f;
 	public float pushForce = 3.0f;											// Amount of force to apply
+    public float exhaustAmount = 0.005f;
+    public float regenAmount = 0.04f;
 
 	private CharacterController _charController;
 	private ControllerColliderHit _contact;
@@ -26,13 +29,19 @@ public class RelativeMovement : MonoBehaviour {
 	void Update () {
 		Vector3 movement = Vector3.zero;									// Start with vector (0,0,0) and add movement components progressively.
 
+        //When moving, deplete energy -- using keys over axis 
+        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.W))
+            energyUI.GetComponent<TiredPlayer>().Exhaust(exhaustAmount);
+        else
+            energyUI.GetComponent<TiredPlayer>().Exhaust(-regenAmount);
+
 		float horInput = Input.GetAxis ("Horizontal");
 		float VertInput = Input.GetAxis ("Vertical");
 		if (horInput != 0 || VertInput != 0) {								// Only handle movement while arrow keys are pressed
 			movement.x = horInput * moveSpeed;								// Overwrite the existing X and Z lines to apply movement speed.
 			movement.z = VertInput * moveSpeed;
 			movement = Vector3.ClampMagnitude (movement, moveSpeed);		// Limit diagonal movement to the same speed as movement along an axis.
-
+            
 			Quaternion tmp = target.rotation;								// Keep the initial rotation to restore after finishing with the target object
 			target.eulerAngles = new Vector3 (0, target.eulerAngles.y, 0);
 			movement = target.TransformDirection (movement);				// Transform movement direction from Local to Global coorindates
